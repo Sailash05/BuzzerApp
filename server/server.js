@@ -27,16 +27,22 @@ router.route('/admin')
   res.sendFile(path.join(__dirname, '..','front-end','admin.html'));
 });
 
+let buzzerDetails = [];
+
 io.on("connection", (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
 
     socket.on("client", (data) => {
       console.log("💬 Message from client:", data);
-      io.emit("client", data);
+      buzzerDetails.push(data);
+      buzzerDetails.sort((a, b) => a.time - b.time);
+      console.log(buzzerDetails);
+      io.emit("client", buzzerDetails);
     });
 
     socket.on("admin", (data) => {
       console.log("Message from admin:", data);
+      buzzerDetails = [];
       io.emit("admin", data);
     });
   

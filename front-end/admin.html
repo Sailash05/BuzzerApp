@@ -4,15 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buzzer App</title>
+    <link rel="stylesheet" href="./admin.css">
 </head>
 <body>
-    <h1>Admin Page</h1>
+    <h1>Admin</h1>
 
-    <h1 class="data"></h1>
+    <button onclick="send()" id="unlock-btn">UNLOCK</button>
 
-    <label for="">Input: </label>
-    <input type="text"><br>
-    <button onclick="send()">UNLOCK</button>
+    <table>
+        <thead>
+          <tr>
+            <th>Sno</th>
+            <th>Team Name</th>
+            <th>Time (ms)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Code Warriors</td>
+            <td>135</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>CSE Squad</td>
+            <td>153</td>
+          </tr>
+        </tbody>
+      </table>
 
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
