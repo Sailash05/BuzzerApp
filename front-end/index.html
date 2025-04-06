@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buzzer</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Hello this is my new buzzer app</h1>
 
-    <h1 class="data"></h1>
-
-    <label for="">Input: </label>
-    <input type="text"><br>
-    <button onclick="send()">Submit</button>
+    <h1>Press the Buzzer!</h1>
+    <input type="text" id="team-name" placeholder="Enter Team Name" /><button id="edit-btn">Save</button><br>
+    <button id="buzzer-btn" disabled>Locked</button>
+    <h3 id="timer">Time : </h3>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="./script.js"></script>

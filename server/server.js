@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const router = express.Router();
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -17,17 +18,26 @@ const io = new Server(server, {
     }
 });
 
-app.use("/", require("./route/root"));
+router.route('/')
+.get((req,res) => {
+     res.sendFile(path.join(__dirname,'..','front-end','index.html'));
+});
+router.route('/admin')
+.get((req, res) => {
+  res.sendFile(path.join(__dirname, '..','front-end','admin.html'));
+});
 
 io.on("connection", (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
-  
-    // Handle incoming messages
-    socket.on("message", (data) => {
+
+    socket.on("client", (data) => {
       console.log("💬 Message from client:", data);
-  
-      // Send to all clients except sender
-      socket.broadcast.emit("message", data);
+      io.emit("client", data);
+    });
+
+    socket.on("admin", (data) => {
+      console.log("Message from admin:", data);
+      io.emit("admin", data);
     });
   
     socket.on("disconnect", () => {
@@ -35,5 +45,4 @@ io.on("connection", (socket) => {
     });
 });
 
-//app.listen(PORT, () => console.log(`Port running on ${PORT}`));
 server.listen(PORT, () => console.log(`Port running on ${PORT}`));
