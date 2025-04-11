@@ -27,27 +27,83 @@ router.route('/admin')
   res.sendFile(path.join(__dirname, '..','front-end','admin.html'));
 });
 
-let buzzerDetails = [];
+const rooms = {};
 
-io.on("connection", (socket) => {
+io.on('connection', (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
 
-    socket.on("client", (data) => {
-      console.log("💬 Message from client:", data);
-      buzzerDetails.push(data);
-      buzzerDetails.sort((a, b) => a.time - b.time);
-      console.log(buzzerDetails);
-      io.emit("client", buzzerDetails);
+    socket.on('joinRoom', ({roomCode, teamName, isAdmin}) => {
+        if(!rooms[roomCode]) {
+            if(!isAdmin) {
+                socket.emit("error", "Room does not exist. Please check the room code.")
+                return;
+            }
+            rooms[roomCode] = {
+                adminId: socket.id,
+                clients: [],
+                details: []
+            };
+            console.log(`🛠️ Admin created and joined room ${roomCode}`);
+        }
+        else {
+            if(isAdmin) {
+                socket.emit("error", "Room already has an admin.");
+                return;
+            }
+            rooms[roomCode].clients.push(socket.id);
+            socket.data.teamName = teamName;
+            console.log(`👤 ${teamName} joined room ${roomCode}`);
+        }
+        socket.join(roomCode);        
     });
 
-    socket.on("admin", (data) => {
-      console.log("Message from admin:", data);
-      buzzerDetails = [];
-      io.emit("admin", data);
+    socket.on("client", ({ roomCode, teamName, time }) => {
+        const room = rooms[roomCode];
+        if (!room) {
+            socket.emit("error", "Room does not exist.");
+            return;
+        }
+
+        const alreadyBuzzed = room.details.find(entry => entry.teamName === teamName);
+        if (alreadyBuzzed) return;
+
+        const buzzData = { teamName, time };
+        room.details.push(buzzData);
+        room.details.sort((a, b) => a.time - b.time); // sort by buzz time
+
+        console.log(`🔔 ${teamName} buzzed in room ${roomCode} at ${time}`);
+        io.to(roomCode).emit("client", room.details); // broadcast updated buzz list
     });
-  
+
+    socket.on("admin", ({ roomCode, command }) => {
+        const room = rooms[roomCode];
+        if (!room || room.adminId !== socket.id) {
+            socket.emit("error", "Unauthorized admin or room does not exist.");
+            return;
+        }
+
+        if (command === "UNLOCK") {
+            room.details = [];
+            console.log(`🔄 Buzzer reset in room ${roomCode}`);
+            io.to(roomCode).emit("admin", "UNLOCK");
+        } else {
+            io.to(roomCode).emit("admin", command);
+        }
+    });
+
+
     socket.on("disconnect", () => {
-      console.log(`❌ Client disconnected: ${socket.id}`);
+        console.log(`❌ Client disconnected: ${socket.id}`);
+        for (const [roomCode, room] of Object.entries(rooms)) {
+            if (room.adminId === socket.id) {
+                console.log(`🗑️ Admin left, deleting room ${roomCode}`);
+                io.to(roomCode).emit("admin", "ROOM_CLOSED");
+                delete rooms[roomCode];
+            } 
+            else {
+                room.clients = room.clients.filter(id => id !== socket.id);
+            }
+        }
     });
 });
 
